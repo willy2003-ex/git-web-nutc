@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🐒 猴子天氣預報</title>
+
+<style>
+    body {
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(160deg, #ffeaa7, #fabd5a, #ffe8b0);
+        font-family: "Noto Sans TC", sans-serif;
+        color: #4b3300;
+    }
+
+    h1 {
+        text-align: center;
+        font-weight: 900;
+        color: #8e5a00;
+        margin-bottom: 15px;
+        font-size: 1.9rem;
+        text-shadow: 2px 2px 6px #ffffffaa;
+    }
+
+    .container {
+        max-width: 650px;
+        margin: auto;
+    }
+
+    .forecast-card {
+        background: #ffffffcc;
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 14px #a3680085;
+        backdrop-filter: blur(4px);
+        transition: 0.3s;
+    }
+
+    .forecast-card.current {
+        background: #fff1c4;
+        border: 2px solid #c77f00;
+        transform: scale(1.03);
+    }
+
+    .time-label {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #7a4f00;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .weather-icon {
+        font-size: 2.6rem;
+        animation: hop 1.8s ease-in-out infinite;
+    }
+
+    @keyframes hop {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .info {
+        margin-top: 12px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+        .forecast-card { padding: 14px; }
+        .time-label { font-size: 1.1rem; }
+        .weather-icon { font-size: 2.2rem; }
+    }
+</style>
+</head>
+
+<body>
+<h1>🐒🍌 猴子天氣預報 🍌🐒</h1>
+
+<div class="container" id="weather-area">載入中…</div>
+
+<script>
+// 🐒 依天氣文字替換猴子風格 emoji icon
+function getWeatherIcon(text) {
+    if (text.includes("雨")) return "🌧️";
+    if (text.includes("雷")) return "⛈️";
+    if (text.includes("陰")) return "☁️";
+    if (text.includes("雲")) return "⛅";
+    return "☀️";
+}
+
+// 🐒 時段名稱（早晨 / 下午 / 晚上）
+function getPeriodName(date) {
+    const hour = date.getHours();
+    if (hour >= 6 && hour < 12) return "🍌 早晨";
+    if (hour >= 12 && hour < 18) return "🌞 下午";
+    return "🌙 晚上";
+}
+
+async function loadWeather() {
+    const area = document.getElementById("weather-area");
+
+    try {
+        const res = await fetch("https://nutc-web-vic-peng.zeabur.app/api/weather/kaohsiung");
+        const json = await res.json();
+        const data = json.data;
+        const now = new Date();
+
+        area.innerHTML = ""; // 清空
+
+        data.forecasts.forEach((f) => {
+            const start = new Date(f.startTime);
+            const isCurrent = now >= start && now < new Date(f.endTime);
+            const icon = getWeatherIcon(f.weather);
+            const periodName = getPeriodName(start);
+
+            area.innerHTML += `
+                <div class="forecast-card ${isCurrent ? "current" : ""}">
+                    <div class="time-label">
+                        <span class="weather-icon">${icon}</span>
+                        🐵 ${periodName}
+                    </div>
+                    <div class="info">
+                        <div>天氣：${f.weather}</div>
+                        <div>🌡️ ${f.minTemp} ～ ${f.maxTemp}</div>
+                        <div>💧 降雨：${f.rain}</div>
+                        <div>✨ 舒適度：${f.comfort}</div>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (err) {
+        area.innerHTML = "⚠️ 無法取得天氣資料";
+        console.error(err);
+    }
+}
+
+loadWeather();
+</script>
+
+</body>
+</html>
